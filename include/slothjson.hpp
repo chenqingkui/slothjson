@@ -15,12 +15,14 @@
 #include <map>
 #include <sstream>
 #include <fstream>
-#include <rapidjson.h>
-#include <document.h>
-#include <stringbuffer.h>
-#include <writer.h>
-#include <prettywriter.h>
-
+#include <iostream>
+#include "rapidjson/rapidjson.h"
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/error/error.h"
+#include "rapidjson/error/en.h"
 namespace slothjson
 {
     typedef rapidjson::Document::AllocatorType allocator_t;
@@ -116,6 +118,7 @@ namespace slothjson
 
 		template <typename src_t, typename dst_t>  inline static 
 		bool __convert(const src_t& src, dst_t& dst);
+
 		template<bool pretty>  inline static 
 		bool encode(const rapidjson::Document& doc, std::string& json_val);
 
@@ -131,13 +134,13 @@ namespace slothjson
 	template<typename T> 
 	bool slothjson_cxx::encode(const T& obj_val, allocator_t& alloc, rapidjson::Value& json_val)
 	{
-		return false;
+		return obj_val.encode(alloc,json_val);
 	}
 		
 	template<typename T>  
 	bool slothjson_cxx::decode(const rapidjson::Value& json_val, T& obj_val)
 	{
-		return false;
+		return obj_val.decode(json_val);
 	}
 
     template<typename T>
@@ -675,7 +678,6 @@ namespace slothjson
         }
         return __convert(src, dst);
     }
-
     char * json_loader_t::__load(const char * path)
     {
         if (!path)
@@ -715,4 +717,4 @@ namespace slothjson
     }
 
 }
-#endif 
+#endif // __slothjson_hpp_h__
