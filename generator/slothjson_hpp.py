@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#author: jobs
+#author: jobs,yuchen
 #email: yao050421103@gmail.com
 import sys
 import os.path
@@ -152,7 +152,55 @@ def get_member_methods():
                 member[NAME], member[NAME], member[NAME]) for member in members
             ]))
         }
-    return [__construct, __assign, __eq, __encode, __decode]
+
+
+    __encode_to_string = {
+        'dec': lambda declare, ctype: '    bool encode_to_string(std::string& json_str) const;' if declare else (
+            'bool %s::encode_to_string(std::string& json_str) const' % ctype
+            ),
+		'imp': lambda ctype, members: merge([
+			'		bool b_status = false;',
+			'		rapidjson::Value json_val;',
+			'		rapidjson::Document json_doc;',
+			'		rapidjson::Document::AllocatorType& json_alloc = json_doc.GetAllocator();',
+			'		b_status = encode(json_alloc,json_doc);',
+			'		rapidjson::StringBuffer buffer;',
+			'		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);',
+			'		json_doc.Accept(writer);',
+			'		json_str = buffer.GetString();',
+			'		return b_status;'
+		])
+		
+        }
+
+    __decode_from_string = {
+        'dec': lambda declare, ctype: '    bool decode_from_string(const std::string& json_str);' if declare else (
+            'bool %s::decode_from_string(const std::string& json_str)' % ctype
+            ),
+        'imp': lambda ctype, members: merge([
+           
+			'       try',
+			'		{',
+			'			rapidjson::Document json_doc;',
+			'			if(!(json_doc.Parse<0>(json_str.c_str()).HasParseError()))',
+			'			{',
+			'					return decode(json_doc);',
+			'			}',
+			'			else',
+			'			{',
+			'					std::cout<<"parse error:"<< json_doc.GetParseError()<< json_doc.GetErrorOffset()',
+			'							<<rapidjson::GetParseError_En(json_doc.GetParseError())<<std::endl;',
+			'			}',
+			'		}',
+			'		catch(std::exception e)',
+			'		{',
+			'			std::cout<<e.what()<<std::endl;',
+			'		}',
+			'		return false;'
+            ])
+        }
+		
+    return [__construct, __assign, __eq, __encode, __decode, __encode_to_string, __decode_from_string]
 
 def get_object_methods():
     __encode = {
