@@ -159,16 +159,16 @@ def get_member_methods():
             'bool %s::encode_to_string(std::string& json_str) const' % ctype
             ),
 		'imp': lambda ctype, members: merge([
-			'		bool b_status = false;',
+			'		bool status = false;',
 			'		rapidjson::Value json_val;',
 			'		rapidjson::Document json_doc;',
 			'		rapidjson::Document::AllocatorType& json_alloc = json_doc.GetAllocator();',
-			'		b_status = encode(json_alloc,json_doc);',
+			'		status = encode(json_alloc,json_doc);',
 			'		rapidjson::StringBuffer buffer;',
 			'		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);',
 			'		json_doc.Accept(writer);',
 			'		json_str = buffer.GetString();',
-			'		return b_status;'
+			'		return status;'
 		])
 		
         }
