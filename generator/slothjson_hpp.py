@@ -1,6 +1,6 @@
 #!/usr/bin/python
-#author: jobs,yuchen
-#email: yao050421103@gmail.com
+#author: jobs,xiuyu
+#email: yao050421103@gmail.com 
 import sys
 import os.path
 import datetime
@@ -159,16 +159,16 @@ def get_member_methods():
             'bool %s::encode_to_string(std::string& json_str) const' % ctype
             ),
 		'imp': lambda ctype, members: merge([
-			'		bool status = false;',
-			'		rapidjson::Value json_val;',
-			'		rapidjson::Document json_doc;',
-			'		rapidjson::Document::AllocatorType& json_alloc = json_doc.GetAllocator();',
-			'		status = encode(json_alloc,json_doc);',
-			'		rapidjson::StringBuffer buffer;',
-			'		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);',
-			'		json_doc.Accept(writer);',
-			'		json_str = buffer.GetString();',
-			'		return status;'
+			'	bool status = false;',
+			'	rapidjson::Value json_val;',
+			'	rapidjson::Document json_doc;',
+			'	rapidjson::Document::AllocatorType& json_alloc = json_doc.GetAllocator();',
+			'	status = encode(json_alloc,json_doc);',
+			'	rapidjson::StringBuffer buffer;',
+			'	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);',
+			'	json_doc.Accept(writer);',
+			'	json_str = buffer.GetString();',
+			'	return status;'
 		])
 		
         }
@@ -178,25 +178,24 @@ def get_member_methods():
             'bool %s::decode_from_string(const std::string& json_str)' % ctype
             ),
         'imp': lambda ctype, members: merge([
-           
-			'       try',
+			'	try',
+			'	{',
+			'		rapidjson::Document json_doc;',
+			'		if(!(json_doc.Parse<0>(json_str.c_str()).HasParseError()))',
 			'		{',
-			'			rapidjson::Document json_doc;',
-			'			if(!(json_doc.Parse<0>(json_str.c_str()).HasParseError()))',
-			'			{',
 			'					return decode(json_doc);',
-			'			}',
-			'			else',
-			'			{',
-			'					std::cout<<"parse error:"<< json_doc.GetParseError()<< json_doc.GetErrorOffset()',
-			'							<<rapidjson::GetParseError_En(json_doc.GetParseError())<<std::endl;',
-			'			}',
 			'		}',
-			'		catch(std::exception e)',
+			'		else',
 			'		{',
-			'			std::cout<<e.what()<<std::endl;',
+			'			std::cout<<"parse error:"<< json_doc.GetParseError()<< json_doc.GetErrorOffset()',
+			'				<<rapidjson::GetParseError_En(json_doc.GetParseError())<<std::endl;',
 			'		}',
-			'		return false;'
+			'	}',
+			'	catch(std::exception e)',
+			'	{',
+			'		std::cout<<e.what()<<std::endl;',
+			'	}',
+			'	return false;'
             ])
         }
 		
@@ -211,7 +210,53 @@ def get_object_methods():
         'dec': lambda ctype: 'bool decode(const rapidjson::Value& json_val, %s& obj_val)' % ctype,
         'imp': '    return obj_val.decode(json_val);'
         }
-    return [__encode, __decode]
+    __encode_arr = {
+        'dec': lambda ctype: 'bool encode(const std::vector<%s>& obj_val, allocator_t& alloc, rapidjson::Value& json_val)' % ctype,
+        'imp': '    return slothjson_cxx::encode(obj_val,alloc, json_val);'
+        }
+    __decode_arr = {
+        'dec': lambda ctype: 'bool decode(const rapidjson::Value& json_val, std::vector<%s>& obj_val)' % ctype,
+        'imp': '    return slothjson_cxx::decode(json_val,obj_val);'
+        }
+    __encode_arr_to_string = {
+        'dec': lambda ctype: 'bool encode(const  std::vector<%s>& obj_val,std::string& json_str)' % ctype,
+        'imp': merge([
+            '	bool status = false;',
+            '	rapidjson::Value json_val;',
+            '	rapidjson::Document json_doc;',
+            '	rapidjson::Document::AllocatorType& json_alloc = json_doc.GetAllocator();',
+            '	status = slothjson_cxx::encode(obj_val,json_alloc,json_doc);',
+            '	rapidjson::StringBuffer buffer;',
+            '	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);',
+            '	json_doc.Accept(writer);',
+            '	json_str = buffer.GetString();',
+            '	return status;'
+            ])
+        }
+    __decode_arr_from_string = {
+        'dec': lambda ctype: 'bool decode(const std::string& json_str, std::vector<%s>& obj_val)' % ctype,
+        'imp': merge([
+			'	try',
+			'	{',
+			'		rapidjson::Document json_doc;',
+			'		if(!(json_doc.Parse<0>(json_str.c_str()).HasParseError()))',
+			'		{',
+			'			return slothjson_cxx::decode(json_doc,obj_val);',
+			'		}',
+			'		else',
+			'		{',
+			'			std::cout<<"parse error:"<< json_doc.GetParseError()<< json_doc.GetErrorOffset()',
+			'					<<rapidjson::GetParseError_En(json_doc.GetParseError())<<std::endl;',
+			'		}',
+			'	}',
+			'	catch(std::exception e)',
+			'	{',
+			'		std::cout<<e.what()<<std::endl;',
+			'	}',
+			'	return false;'
+            ])
+        }
+    return [__encode, __decode,__encode_arr,__decode_arr,__encode_arr_to_string,__decode_arr_from_string]
 
 def gen_from_schema(path, obj, scalar_dict, member_methods, object_methods):
     def __check(structs):
